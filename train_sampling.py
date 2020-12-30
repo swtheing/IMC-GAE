@@ -29,7 +29,8 @@ class Net(nn.Module):
     def __init__(self, args, dev_id):
         super(Net, self).__init__()
         self._act = get_activation(args.model_activation)
-        self.encoder = GCMCLayer(args.rating_vals,
+        self.encoder = nn.ModuleList()
+        self.encoder.append(GCMCLayer(args.rating_vals,
                                  args.src_in_units,
                                  args.dst_in_units,
                                  args.gcn_agg_units,
@@ -38,21 +39,33 @@ class Net(nn.Module):
                                  args.gcn_agg_accum,
                                  agg_act=self._act,
                                  share_user_item_param=args.share_param,
-                                 device=dev_id)
-        '''
-        self.encoder_2 = GCMCLayer(args.rating_vals,
-                                 args.dst_in_units,
-                                 args.dst_in_units,
-                                 args.gcn_agg_units,
-                                 args.gcn_out_units,
-                                 args.gcn_dropout,
-                                 args.gcn_agg_accum,
-                                 agg_act=self._act,
-                                 share_user_item_param=args.share_param,
-                                 ini = False,
-                                 device=dev_id)
-        '''
+                                 device=dev_id))
+        
         self.rating_vals = args.rating_vals
+
+        self.gcn_agg_accum = args.gcn_agg_accum
+        self.rating_vals = args.rating_vals
+        self.device = dev_id
+        self.gcn_agg_units = args.gcn_agg_units
+        self.src_in_units = args.src_in_units
+        self.batch_size = args.minibatch_size
+        for i in  range(1, args.layers):
+            if args.gcn_agg_accum == 'stack':
+                gcn_out_units = args.gcn_out_units * len(args.rating_vals)
+            else:
+                gcn_out_units = args.gcn_out_units
+            self.encoder.append(GCMCLayer(args.rating_vals,
+                                        args.gcn_out_units,
+                                        args.gcn_out_units,
+                                        gcn_out_units,
+                                        args.gcn_out_units,
+                                        args.gcn_dropout - i*0.1,
+                                        args.gcn_agg_accum,
+                                        agg_act=self._act,
+                                        share_user_item_param=args.share_param,
+                                        ini = False,
+                                        device=dev_id))
+
         if args.mix_cpu_gpu and args.use_one_hot_fea:
             # if use_one_hot_fea, user and movie feature is None
             # W can be extremely large, with mix_cpu_gpu W should be stored in CPU
@@ -65,21 +78,57 @@ class Net(nn.Module):
                                  num_basis=args.gen_r_num_basis_func)
         self.decoder.to(dev_id)
 
-    def forward(self, compact_g, frontier, ufeat, ifeat, possible_rating_values):
-        user_out, movie_out = self.encoder(frontier, ufeat, ifeat)
+    def forward(self, compact_g, frontier, ufeat, ifeat, possible_rating_values, Two_Stage=False):
+        # user_out, movie_out = self.encoder(frontier, ufeat, ifeat)
         '''
         user_out_2, movie_out_2 = self.encoder_2(frontier, user_out, movie_out)
         user_out = th.cat([user_out, user_out_2], 1)
         movie_out = th.cat([movie_out, movie_out_2], 1)
         '''
+        for i in range(0, args.layers):
+            user_o, movie_o = self.encoder[i](
+                frontier[i],
+                ufeat,
+                ifeat)
+            ufeat = user_o
+            ifeat = movie_o
+            if i == 0:
+                user_out = user_o[:self.batch_size,:]
+                movie_out = movie_o[:self.batch_size,:]
+            else:
+                user_t = user_o[:self.batch_size,:]
+                movie_t = movie_o[:self.batch_size,:]
+                user_out += user_t / float(i + 1)
+                movie_out += movie_t /float(i + 1)
+            #user_out.append(user_o)
+            #movie_out.append(movie_o)
+
+        # pred_ratings = self.decoder(compact_g, user_out, movie_out)
+        # W_r_last = None
+        # reg_loss = 0.0
+        # for rating in self.rating_vals:
+        #     rating = to_etype_name(rating)
+        #     if W_r_last is not None:
+        #         reg_loss += th.sum((self.encoder.W_r[rating] - W_r_last)**2)
+        #     W_r_last = self.encoder.W_r[rating]
+        # return pred_ratings, reg_loss
         pred_ratings = self.decoder(compact_g, user_out, movie_out)
         W_r_last = None
         reg_loss = 0.0
+        '''
         for rating in self.rating_vals:
             rating = to_etype_name(rating)
             if W_r_last is not None:
-                reg_loss += th.sum((self.encoder.W_r[rating] - W_r_last)**2)
-            W_r_last = self.encoder.W_r[rating]
+                reg_loss += th.sum((self.encoder[0].W_r[rating] - W_r_last)**2)
+            W_r_last = self.encoder[0].W_r[rating]
+            #W_r_last_2 = self.encoder_2.W_r[rating]
+        '''
+        W = th.matmul(self.encoder[0].att, self.encoder[0].basis.view(self.encoder[0].basis_units, -1))
+        W = W.view(len(self.rating_vals), self.src_in_units, -1)
+        for i, rating in enumerate(self.rating_vals):
+            rating = to_etype_name(rating)
+            if i != 0:
+                reg_loss += -th.sum(th.cosine_similarity(W[i,:,:], W[i-1,:,:], dim=1))
         return pred_ratings, reg_loss
 
 def load_subtensor(input_nodes, pair_graph, blocks, dataset, parent_graph):
@@ -139,12 +188,12 @@ def evaluate(args, dev_id, net, dataset, dataloader, segment='valid'):
         head_feat, tail_feat, blocks = load_subtensor(
             input_nodes, pair_graph, blocks, dataset,
             dataset.valid_enc_graph if segment == 'valid' else dataset.test_enc_graph)
-        frontier = blocks[0]
         true_relation_ratings = \
             dataset.valid_truths[pair_graph.edata[dgl.EID]] if segment == 'valid' else \
             dataset.test_truths[pair_graph.edata[dgl.EID]]
-
-        frontier = frontier.to(dev_id)
+        frontier = blocks
+        for i in range(len(frontier)):
+            frontier[i] = frontier[i].to(dev_id)
         head_feat = head_feat.to(dev_id)
         tail_feat = tail_feat.to(dev_id)
         pair_graph = pair_graph.to(dev_id)
@@ -223,6 +272,7 @@ def config():
     parser.add_argument('--minibatch_size', type=int, default=100)
     parser.add_argument('--num_workers_per_gpu', type=int, default=8)
     parser.add_argument('--ARR', type=float, default=0.0000000)
+    parser.add_argument('--layers', type=int, default=1)
 
     args = parser.parse_args()
     ### configure save_fir to save all the info
@@ -245,13 +295,15 @@ def run(proc_id, n_gpus, args, devices, dataset):
     reverse_types = {to_etype_name(k): 'rev-' + to_etype_name(k)
                      for k in dataset.possible_rating_values}
     reverse_types.update({v: k for k, v in reverse_types.items()})
-    sampler = dgl.dataloading.MultiLayerNeighborSampler([None], return_eids=True)
+    sampler = dgl.dataloading.MultiLayerNeighborSampler([10], replace = False, return_eids=True)
     dataloader = dgl.dataloading.EdgeDataLoader(
         dataset.train_enc_graph,
         {to_etype_name(k): th.arange(
             dataset.train_enc_graph.number_of_edges(etype=to_etype_name(k)))
          for k in dataset.possible_rating_values},
         sampler,
+        exclude='reverse_types', 
+        reverse_etypes=reverse_types,
         batch_size=args.minibatch_size,
         shuffle=True,
         drop_last=False)
@@ -317,16 +369,22 @@ def run(proc_id, n_gpus, args, devices, dataset):
             for step, (input_nodes, pair_graph, blocks) in enumerate(tq):
                 head_feat, tail_feat, blocks = load_subtensor(
                     input_nodes, pair_graph, blocks, dataset, dataset.train_enc_graph)
-                frontier = blocks[0]
+                frontier = blocks
                 compact_g = flatten_etypes(pair_graph, dataset, 'train').to(dev_id)
                 true_relation_labels = compact_g.edata['label']
                 true_relation_ratings = compact_g.edata['rating']
 
                 head_feat = head_feat.to(dev_id)
                 tail_feat = tail_feat.to(dev_id)
-                frontier = frontier.to(dev_id)
+                for i in range(len(frontier)):
+                    frontier[i] = frontier[i].to(dev_id)
 
-                pred_ratings, reg_loss = net(compact_g, frontier, head_feat, tail_feat, dataset.possible_rating_values)
+                if iter_idx > 250:
+                    Two_Stage = True
+                else:
+                    Two_Stage = False
+                Two_Stage = False
+                pred_ratings, reg_loss = net(compact_g, frontier, head_feat, tail_feat, dataset.possible_rating_values, Two_Stage)
                 loss = rating_loss_net(pred_ratings, true_relation_labels.to(dev_id)).mean() + args.ARR * reg_loss
                 count_loss += loss.item()
                 optimizer.zero_grad()
@@ -441,3 +499,4 @@ if __name__ == '__main__':
             procs.append(p)
         for p in procs:
             p.join()
+

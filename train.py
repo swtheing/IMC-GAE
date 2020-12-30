@@ -168,7 +168,7 @@ def train(args):
                 valid_ratio=args.data_valid_ratio)
     '''
     dataset = MovieLens(args.data_name, args.device, use_one_hot_fea=args.use_one_hot_fea, symm=args.gcn_agg_norm_symm,
-                        test_ratio=args.data_test_ratio, valid_ratio=args.data_valid_ratio)
+                        test_ratio=args.data_test_ratio, valid_ratio=args.data_valid_ratio, sparse_ratio = args.sparse_ratio)
     print("Loading data finished ...\n")
 
     args.src_in_units = dataset.user_feature_shape[1]
@@ -234,6 +234,7 @@ def train(args):
             Two_Stage = True
         else:
             Two_Stage = False
+        Two_Stage = False
         pred_ratings, reg_loss = net(dataset.train_enc_graph, dataset.train_dec_graph,
                            dataset.user_feature, dataset.movie_feature, Two_Stage)
         if args.loss_func == "CE":
@@ -375,6 +376,7 @@ def config():
     parser.add_argument('--share_param', default=True, action='store_true')
     parser.add_argument('--ARR', type=float, default='0.000004')
     parser.add_argument('--loss_func', type=str, default='CE')
+    parser.add_argument('--sparse_ratio', type=float, default=0.0)
     args = parser.parse_args()
     args.device = th.device(args.device) if args.device >= 0 else th.device('cpu')
     ### configure save_fir to save all the info
