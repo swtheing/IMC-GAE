@@ -85,6 +85,8 @@ class Net(nn.Module):
         user_out = th.cat([user_out, user_out_2], 1)
         movie_out = th.cat([movie_out, movie_out_2], 1)
         '''
+        user_out = []
+        movie_out = []
         for i in range(0, args.layers):
             user_o, movie_o = self.encoder[i](
                 frontier[i],
@@ -92,14 +94,17 @@ class Net(nn.Module):
                 ifeat)
             ufeat = user_o
             ifeat = movie_o
+            user_out.append(user_o)
+            movie_out.append(movie_o)
+            u_size = user_o.shape[0]
+            m_size = movie_o.shape[0]
+        for i in range(0, args.layers):
             if i == 0:
-                user_out = user_o[:self.batch_size,:]
-                movie_out = movie_o[:self.batch_size,:]
+                user_o = user_out[i][:u_size, :]
+                movie_o = movie_out[i][:m_size, :]
             else:
-                user_t = user_o[:self.batch_size,:]
-                movie_t = movie_o[:self.batch_size,:]
-                user_out += user_t / float(i + 1)
-                movie_out += movie_t /float(i + 1)
+                user_o += user_out[i][:u_size, :] / float(i + 1)
+                movie_o += movie_out[i][:m_size, :] /float(i + 1)
             #user_out.append(user_o)
             #movie_out.append(movie_o)
 
@@ -112,7 +117,7 @@ class Net(nn.Module):
         #         reg_loss += th.sum((self.encoder.W_r[rating] - W_r_last)**2)
         #     W_r_last = self.encoder.W_r[rating]
         # return pred_ratings, reg_loss
-        pred_ratings = self.decoder(compact_g, user_out, movie_out)
+        pred_ratings = self.decoder(compact_g, user_o, movie_o)
         W_r_last = None
         reg_loss = 0.0
         '''
@@ -269,7 +274,7 @@ def config():
     parser.add_argument('--train_early_stopping_patience', type=int, default=50)
     parser.add_argument('--share_param', default=False, action='store_true')
     parser.add_argument('--mix_cpu_gpu', default=False, action='store_true')
-    parser.add_argument('--minibatch_size', type=int, default=100)
+    parser.add_argument('--minibatch_size', type=int, default=500)
     parser.add_argument('--num_workers_per_gpu', type=int, default=8)
     parser.add_argument('--ARR', type=float, default=0.0000000)
     parser.add_argument('--layers', type=int, default=1)
@@ -295,7 +300,7 @@ def run(proc_id, n_gpus, args, devices, dataset):
     reverse_types = {to_etype_name(k): 'rev-' + to_etype_name(k)
                      for k in dataset.possible_rating_values}
     reverse_types.update({v: k for k, v in reverse_types.items()})
-    sampler = dgl.dataloading.MultiLayerNeighborSampler([10], replace = False, return_eids=True)
+    sampler = dgl.dataloading.MultiLayerNeighborSampler([10, 10], replace = False, return_eids=True)
     dataloader = dgl.dataloading.EdgeDataLoader(
         dataset.train_enc_graph,
         {to_etype_name(k): th.arange(
