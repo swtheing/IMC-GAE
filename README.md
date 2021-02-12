@@ -1,23 +1,28 @@
-# Graph Convolutional Matrix Completion
+# IMC-GAE: Inductive Matrix Completion Using Graph Autoencoder for Real Recommender Systems
 
-Paper link: [https://arxiv.org/abs/1706.02263](https://arxiv.org/abs/1706.02263)
-Author's code: [https://github.com/riannevdberg/gc-mc](https://github.com/riannevdberg/gc-mc)
+Paper link: 
+Author's code: [https://github.com/swtheing/IMC-GAE](https://github.com/swtheing/IMC-GAE)
 
 The implementation does not handle side-channel features and mini-epoching and thus achieves
 slightly worse performance when using node features.
 
-Credit: Jiani Zhang ([@jennyzhang0215](https://github.com/jennyzhang0215))
+Credit: Wei shen ([@swtheing](https://github.com/swtheing))
 
-## Dependencies
-* PyTorch 1.2+
-* pandas
-* torchtext 0.4+ (if using user and item contents as node features)
-* spacy (if using user and item contents as node features)
-    - You will also need to run `python -m spacy download en_core_web_sm`
+
+## Requirements
+------------
+
+Latest tested combination: Python 3.8.1 + PyTorch 1.4.0 + DGL 0.5.2.
+
+Install [PyTorch](https://pytorch.org/)
+
+Install [DGL](https://github.com/dmlc/dgl)
+
+Other required python libraries: numpy, scipy, pandas, h5py, networkx, tqdm ,bidict etc.
 
 ## Data
 
-Supported datasets: ml-100k, ml-1m, ml-10m
+Supported datasets: ml-100k, ml-1m, ml-10m, flixster, douban, yahoo_music
 
 ## How to run
 ### Train with full-graph
