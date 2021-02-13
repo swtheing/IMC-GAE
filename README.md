@@ -13,7 +13,7 @@ Credit: Wei shen ([@swtheing](https://github.com/swtheing))
 ## Requirements
 ------------
 
-Latest tested combination: Python 3.8.1 + PyTorch 1.4.0 + DGL 0.5.2.
+Latest tested combination: Python 3.8.1 + PyTorch 1.4.0 + DGL 0.5.3.
 
 Install [PyTorch](https://pytorch.org/)
 
