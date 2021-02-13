@@ -1,5 +1,7 @@
 # IMC-GAE: Inductive Matrix Completion Using Graph Autoencoder for Real Recommender Systems
 
+![IMC-GAE](doc/IMC-GAE.png)
+
 Paper link: 
 
 Author's code: [https://github.com/swtheing/IMC-GAE](https://github.com/swtheing/IMC-GAE)
@@ -43,5 +45,4 @@ To train on MovieLens-100K, type:
     python -u train.py --data_name=ml-100k --device 0 --layers 2 --data_valid_ratio 0.05 --model_activation tanh --use_one_hot_fea --ARR 0.00004
 
 To train on MovieLens-1M, type:
-    
     python -u train.py --data_name=ml-1m --device 0 --layers 2 --data_valid_ratio 0.05 --model_activation tanh --use_one_hot_fea--ARR 0.000004
