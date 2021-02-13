@@ -70,9 +70,8 @@ def load_matlab_file(path_file, name_field):
     return out
 
 
-class MovieLens(object):
-    """MovieLens dataset used by GCMC model
-
+class DataSetLoader(object):
+    """
     TODO(minjie): make this dataset more general
 
     The dataset stores MovieLens ratings in two types of graphs. The encoder graph
