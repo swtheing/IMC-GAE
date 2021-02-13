@@ -155,7 +155,7 @@ class DataSetLoader(object):
             download_dir = get_download_dir()
             print("download_dir: ", download_dir)
             zip_file_path = '{}/{}.zip'.format(download_dir, name)
-            #download(_urls[name], path=zip_file_path)
+            download(_urls[name], path=zip_file_path)
             extract_archive(zip_file_path, '{}/{}'.format(download_dir, name))
             if name == 'ml-10m':
                 root_folder = 'ml-10M100K'
