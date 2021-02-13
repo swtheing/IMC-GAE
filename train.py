@@ -11,8 +11,8 @@ import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from data import MovieLens
-from data_custom import DataSetLoader
+from data import DataSetLoader
+#from data_custom import DataSetLoader
 from model import BiDecoder, GCMCLayer, MLPDecoder
 from utils import get_activation, get_optimizer, torch_total_param_num, torch_net_info, MetricLogger
 from utils import to_etype_name
@@ -160,15 +160,15 @@ def evaluate(args, net, dataset, segment='valid', debug = False, idx = 0):
 
 def train(args):
     print(args)
-    '''
+    
     dataset = DataSetLoader(args.data_name, args.device,
                 use_one_hot_fea=args.use_one_hot_fea,
                 symm=args.gcn_agg_norm_symm,
                 test_ratio=args.data_test_ratio,
                 valid_ratio=args.data_valid_ratio)
-    '''
-    dataset = MovieLens(args.data_name, args.device, use_one_hot_fea=args.use_one_hot_fea, symm=args.gcn_agg_norm_symm,
-                        test_ratio=args.data_test_ratio, valid_ratio=args.data_valid_ratio, sparse_ratio = args.sparse_ratio)
+    
+    #dataset = MovieLens(args.data_name, args.device, use_one_hot_fea=args.use_one_hot_fea, symm=args.gcn_agg_norm_symm,
+    #                    test_ratio=args.data_test_ratio, valid_ratio=args.data_valid_ratio, sparse_ratio = args.sparse_ratio)
     print("Loading data finished ...\n")
 
     args.src_in_units = dataset.user_feature_shape[1]
@@ -349,8 +349,8 @@ def config():
     parser.add_argument('--save_dir', type=str, help='The saving directory')
     parser.add_argument('--save_id', type=int, help='The saving log id')
     parser.add_argument('--silent', action='store_true')
-    parser.add_argument('--data_name', default='ml-100k', type=str,
-                        help='The dataset name: ml-100k, ml-1m, ml-10m')
+    parser.add_argument('--data_name', default='yahoo_music', type=str,
+                        help='The dataset name: ml-100k, ml-1m, ml-10m, flixster, douban, yahoo_music')
     parser.add_argument('--data_test_ratio', type=float, default=0.1) ## for ml-100k the test ration is 0.2
     parser.add_argument('--data_valid_ratio', type=float, default=0.05)
     parser.add_argument('--use_one_hot_fea', action='store_true', default=False)
