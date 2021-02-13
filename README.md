@@ -1,212 +1,47 @@
-# Graph Convolutional Matrix Completion
+# IMC-GAE: Inductive Matrix Completion Using Graph Autoencoder for Real Recommender Systems
 
-Paper link: [https://arxiv.org/abs/1706.02263](https://arxiv.org/abs/1706.02263)
-Author's code: [https://github.com/riannevdberg/gc-mc](https://github.com/riannevdberg/gc-mc)
+Paper link: 
+
+Author's code: [https://github.com/swtheing/IMC-GAE](https://github.com/swtheing/IMC-GAE)
 
 The implementation does not handle side-channel features and mini-epoching and thus achieves
 slightly worse performance when using node features.
 
-Credit: Jiani Zhang ([@jennyzhang0215](https://github.com/jennyzhang0215))
+Credit: Wei shen ([@swtheing](https://github.com/swtheing))
 
-## Dependencies
-* PyTorch 1.2+
-* pandas
-* torchtext 0.4+ (if using user and item contents as node features)
-* spacy (if using user and item contents as node features)
-    - You will also need to run `python -m spacy download en_core_web_sm`
+
+## Requirements
+------------
+
+Latest tested combination: Python 3.8.1 + PyTorch 1.4.0 + DGL 0.5.2.
+
+Install [PyTorch](https://pytorch.org/)
+
+Install [DGL](https://github.com/dmlc/dgl)
+
+Other required python libraries: numpy, scipy, pandas, h5py, networkx, tqdm ,bidict etc.
 
 ## Data
 
-Supported datasets: ml-100k, ml-1m, ml-10m
+Supported datasets: ml-100k, ml-1m, ml-10m, flixster, douban, yahoo_music
 
-## How to run
-### Train with full-graph
-ml-100k, no feature
-```bash
-python3 train.py --data_name=ml-100k --use_one_hot_fea --gcn_agg_accum=stack
-```
-Results: RMSE=0.9088 (0.910 reported)
+### Usages
+------
 
-ml-100k, with feature
-```bash
-python3 train.py --data_name=ml-100k --gcn_agg_accum=stack
-```
-Results: RMSE=0.9448 (0.905 reported)
+### Flixster, Douban and YahooMusic
 
-ml-1m, no feature
-```bash
-python3 train.py --data_name=ml-1m --gcn_agg_accum=sum --use_one_hot_fea
-```
-Results: RMSE=0.8377 (0.832 reported)
+To train on Flixster, type:
 
-ml-10m, no feature
-```bash
-python3 train.py --data_name=ml-10m --gcn_agg_accum=stack --gcn_dropout=0.3 \
-                                 --train_lr=0.001 --train_min_lr=0.0001 --train_max_iter=15000 \
-                                 --use_one_hot_fea --gen_r_num_basis_func=4
-```
-Results: RMSE=0.7800 (0.777 reported)
-Testbed: EC2 p3.2xlarge instance(Amazon Linux 2)
+    python -u train.py --data_name=flixster --use_one_hot_fea --gcn_agg_accum=sum --device 0 --ARR 0.00000000000 --train_early_stopping_patience 200 --layers 2 --gcn_agg_units 30 --train_lr 0.01 --data_valid_ratio 0.1 --model_activation tanh --gcn_out_units 30
 
-### Train with minibatch on a single GPU
-ml-100k, no feature
-```bash
-python3 train_sampling.py --data_name=ml-100k \
-                          --use_one_hot_fea \
-                          --gcn_agg_accum=stack \
-                          --gpu 0
+Change flixster to douban or yahoo\_music to do the same experiments on Douban and YahooMusic datasets, respectively. Delete --testing to evaluate on a validation set to do hyperparameter tuning.
 
-```
-ml-100k, no feature with mix_cpu_gpu run, for mix_cpu_gpu run with no feature, the W_r is stored in CPU by default other than in GPU.
-```bash
-python3 train_sampling.py --data_name=ml-100k \
-                          --use_one_hot_fea \
-                          --gcn_agg_accum=stack \
-                          --mix_cpu_gpu \
-                          --gpu 0 
-```
-Results: RMSE=0.9380
+### MovieLens-100K and MovieLens-1M
 
-ml-100k, with feature
-```bash
-python3 train_sampling.py --data_name=ml-100k \
-                          --gcn_agg_accum=stack \
-                          --train_max_epoch 90 \
-                          --gpu 0
-```
-Results: RMSE=0.9574
+To train on MovieLens-100K, type:
 
-ml-1m, no feature
-```bash
-python3 train_sampling.py --data_name=ml-1m \
-                          --gcn_agg_accum=sum \
-                          --use_one_hot_fea \
-                          --train_max_epoch 160 \
-                          --gpu 0
-```
-ml-1m, no feature with mix_cpu_gpu run
-```bash
-python3 train_sampling.py --data_name=ml-1m \
-                          --gcn_agg_accum=sum \
-                          --use_one_hot_fea \
-                          --train_max_epoch 60 \
-                          --mix_cpu_gpu \
-                          --gpu 0
-```
-Results: RMSE=0.8632
+    python -u train.py --data_name=ml-100k --device 0 --layers 2 --data_valid_ratio 0.05 --model_activation tanh --use_one_hot_fea --ARR 0.00004
 
-ml-10m, no feature
-```bash
-python3 train_sampling.py --data_name=ml-10m \
-                          --gcn_agg_accum=stack \
-                          --gcn_dropout=0.3 \
-                          --train_lr=0.001 \
-                          --train_min_lr=0.0001 \
-                          --train_max_epoch=60 \
-                          --use_one_hot_fea \
-                          --gen_r_num_basis_func=4 \
-                          --gpu 0
-```
-ml-10m, no feature with mix_cpu_gpu run
-```bash
-python3 train_sampling.py --data_name=ml-10m \
-                          --gcn_agg_accum=stack \
-                          --gcn_dropout=0.3 \
-                          --train_lr=0.001 \
-                          --train_min_lr=0.0001 \
-                          --train_max_epoch=60 \
-                          --use_one_hot_fea \
-                          --gen_r_num_basis_func=4 \
-                          --mix_cpu_gpu \
-                          --gpu 0
-```
-Results: RMSE=0.8050
-Testbed: EC2 p3.2xlarge instance
-
-### Train with minibatch on multi-GPU
-ml-100k, no feature
-```bash
-python train_sampling.py --data_name=ml-100k \
-                         --gcn_agg_accum=stack \
-                         --train_max_epoch 30 \
-                         --train_lr 0.02 \
-                         --use_one_hot_fea \
-                         --gpu 0,1,2,3,4,5,6,7
-```
-ml-100k, no feature with mix_cpu_gpu run
-```bash
-python train_sampling.py --data_name=ml-100k \
-                         --gcn_agg_accum=stack \
-                         --train_max_epoch 30 \
-                         --train_lr 0.02 \
-                         --use_one_hot_fea \
-                         --mix_cpu_gpu \
-                         --gpu 0,1,2,3,4,5,6,7
-```
-Result: RMSE=0.9397
-
-ml-100k, with feature
-```bash
-python train_sampling.py --data_name=ml-100k \
-                         --gcn_agg_accum=stack \
-                         --train_max_epoch 30 \
-                         --gpu 0,1,2,3,4,5,6,7
-```
-Result: RMSE=0.9655
-
-ml-1m, no feature
-```bash
-python train_sampling.py --data_name=ml-1m \
-                         --gcn_agg_accum=sum \
-                         --train_max_epoch 40 \
-                         --use_one_hot_fea \
-                         --gpu 0,1,2,3,4,5,6,7
-```
-ml-1m, no feature with mix_cpu_gpu run
-```bash
-python train_sampling.py --data_name=ml-1m \
-                         --gcn_agg_accum=sum \
-                         --train_max_epoch 40 \
-                         --use_one_hot_fea \
-                         --mix_cpu_gpu \
-                         --gpu 0,1,2,3,4,5,6,7
-```
-Results: RMSE=0.8621
-
-ml-10m, no feature
-```bash
-python train_sampling.py --data_name=ml-10m \
-                         --gcn_agg_accum=stack \
-                         --gcn_dropout=0.3 \
-                         --train_lr=0.001 \
-                         --train_min_lr=0.0001 \
-                         --train_max_epoch=30 \
-                         --use_one_hot_fea \
-                         --gen_r_num_basis_func=4 \
-                         --gpu 0,1,2,3,4,5,6,7
-```
-ml-10m, no feature with mix_cpu_gpu run
-```bash
-python train_sampling.py --data_name=ml-10m \
-                         --gcn_agg_accum=stack \
-                         --gcn_dropout=0.3 \
-                         --train_lr=0.001 \
-                         --train_min_lr=0.0001 \
-                         --train_max_epoch=30 \
-                         --use_one_hot_fea \
-                         --gen_r_num_basis_func=4 \
-                         --mix_cpu_gpu \
-                         --gpu 0,1,2,3,4,5,6,7
-```
-Results: RMSE=0.8084
-Testbed: EC2 p3.16xlarge instance
-
-### Train with minibatch on CPU
-ml-100k, no feature
-```bash
-python3 train_sampling.py --data_name=ml-100k \
-                          --use_one_hot_fea \
-                          --gcn_agg_accum=stack \
-                          --gpu -1
-```
-Testbed: EC2 r5.xlarge instance
+To train on MovieLens-1M, type:
+    
+    python -u train.py --data_name=ml-1m --device 0 --layers 2 --data_valid_ratio 0.05 --model_activation tanh --use_one_hot_fea--ARR 0.000004
