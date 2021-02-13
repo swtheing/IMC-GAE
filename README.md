@@ -44,4 +44,4 @@ To train on MovieLens-100K, type:
 
 To train on MovieLens-1M, type:
     
-    python -u train.py --data_name=ml-1m --device 0 --layers 2 --data_valid_ratio 0.05 --model_activation tanh --use_one_hot_fea —ARR 0.000004
+    python -u train.py --data_name=ml-1m --device 0 --layers 2 --data_valid_ratio 0.05 --model_activation tanh --use_one_hot_fea--ARR 0.000004
