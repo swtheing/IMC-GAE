@@ -28,7 +28,6 @@ Other required python libraries: numpy, scipy, pandas, h5py, networkx, tqdm ,bid
 Supported datasets: ml-100k, ml-1m, ml-10m, flixster, douban, yahoo_music
 
 ### How to run
-------
 
 To train on Flixster, type:
 ```bash
