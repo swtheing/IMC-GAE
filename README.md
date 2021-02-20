@@ -32,7 +32,7 @@ Supported datasets: ml-100k, ml-1m, ml-10m, flixster, douban, yahoo_music
 
 To train on Flixster, type:
 ```bash
-    python -u train.py --data_name=flixster \--use_one_hot_fea --gcn_agg_accum=sum --device 0 --ARR 0.00000000000 --train_early_stopping_patience 200 --layers 2 --gcn_agg_units 30 --train_lr 0.01 --data_valid_ratio 0.1 --model_activation tanh --gcn_out_units 30
+    python -u train.py --data_name=flixster --use_one_hot_fea --gcn_agg_accum=sum --device 0 --ARR 0.00000000000 --train_early_stopping_patience 200 --layers 2 --gcn_agg_units 30 --train_lr 0.01 --data_valid_ratio 0.1 --model_activation tanh --gcn_out_units 30
 ```
 Results: RMSE=0.8838
 
