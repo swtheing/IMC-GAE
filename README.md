@@ -1,8 +1,8 @@
-# IMC-GAE: Inductive Matrix Completion Using Graph Autoencoder for Real Recommender Systems
+# Inductive Matrix Completion Using Graph Autoencoder
 
 ![IMC-GAE](doc/IMC-GAE.png)
 
-Paper link: 
+Paper link: https://arxiv.org/pdf/2108.11124.pdf
 
 Author's code: [https://github.com/swtheing/IMC-GAE](https://github.com/swtheing/IMC-GAE)
 
