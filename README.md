@@ -1,8 +1,8 @@
-# IMC-GAE: Inductive Matrix Completion Using Graph Autoencoder for Real Recommender Systems
+# Inductive Matrix Completion Using Graph Autoencoder
 
 ![IMC-GAE](doc/IMC-GAE.png)
 
-Paper link: 
+Paper link: https://arxiv.org/pdf/2108.11124.pdf
 
 Author's code: [https://github.com/swtheing/IMC-GAE](https://github.com/swtheing/IMC-GAE)
 
@@ -102,3 +102,19 @@ To train on MovieLens-1M, type:
                        --model_activation tanh 
 ```
 Results: RMSE=0.8290
+
+
+Reference
+---------
+
+If you find the code useful, please cite our paper.
+
+    @article{shen2021inductive,
+      title={Inductive Matrix Completion Using Graph Autoencoder},
+      author={Shen, Wei and Zhang, Chuheng and Tian, Yun and Zeng, Liang and He, Xiaonan and Dou, Wanchun and Xu, Xiaolong},
+      journal={arXiv preprint arXiv:2108.11124},
+      year={2021}
+    }
+
+
+9/17/2021
